@@ -69,7 +69,8 @@ int QuestionPracticeOrSolution (void);
 // функции напечатать
 void PrintRight (void);
 void PrintGaveWrongAnswer (void);
-void UpliftingMood (bool accuracy);
+void UpliftingMoodAfterCorrectAnswers ();
+void UpliftingMoodAfterWrongAnswers (double a, double b, double c, double* x1_ptr, double* x2_ptr);
 
 int main() {
     RunTests ();
@@ -380,6 +381,7 @@ void RunTests (void) {
         x2 = rand () / rand ();
         double a = rand () / rand ();
         a = (MakeComparison (a, 0)) ? 1 : a;
+        x1 = (MakeComparison (x1, 0) && MakeComparison (x2, 0)) ? 1 : x1;
 //                                    {{a, b,            c      }, n_roots_ref, x1_ref, x2_ref}
         TestCase test_random_struct = {{a, -a * (x1 + x2), a * x1 * x2}, TWO_ROOTS,   x1,     x2};
 
@@ -445,33 +447,28 @@ void PracticeSolvingEquations (void) {
     do {
         double a = NAN, b = NAN, c = NAN;
         int n_roots_get = -1, n_roots_ref = -1;
-        double x1_ref = NAN, x2_ref = NAN, x1_get = NAN, x2_get = NAN;
-
-        fseek (file_address, 0, SEEK_CUR);
+        double x1_ref = NAN, x2_ref = NAN;
+        double x1_get = NAN, x2_get = NAN;
 
         fscanf (file_address, "%lg %lg %lg %d %lg %lg", &a, &b, &c, &n_roots_ref, &x1_ref, &x2_ref);
-        printf ("\n%lg*x^2 %c %lg*x %c %lg = 0\n", a,
-                GetOneSign (b, SIGN_PLUS_MINUS), fabs(b),
-                GetOneSign (c, SIGN_PLUS_MINUS), fabs(c));
+        printf ("\n%lg*x^2 %c %lg*x %c %lg = 0\n", a, GetOneSign (b, SIGN_PLUS_MINUS), fabs(b), GetOneSign (c, SIGN_PLUS_MINUS), fabs(c));
         printf ("Number of roots: ");
         scanf ("%d", &n_roots_get);
 
         if (n_roots_ref == n_roots_get){
             switch (n_roots_ref) {
                 case NO_ROOTS:
-                    UpliftingMood (true);
+                    UpliftingMoodAfterCorrectAnswers ();
                     break;
 
                 case ONE_ROOT:
                     printf ("x1: ");
                     scanf ("%lg", &x1_get);
                     if (MakeComparison ((x1_get), (x1_ref)))
-                        UpliftingMood (true);
+                        UpliftingMoodAfterCorrectAnswers ();
 
                     else {
-                        UpliftingMood (false);
-                        CoeffCase CoeffEquation = {.a = a, .b = b, .c = c};
-                        RootsFind (&CoeffEquation, &x1_get, &x2_get, true);
+                        UpliftingMoodAfterWrongAnswers (a, b, c, &x1_get, &x2_get);
                         printf ("Right answer:\nx1 = %lg", x1_get);
                     }
 
@@ -482,12 +479,10 @@ void PracticeSolvingEquations (void) {
                     scanf ("%lg, %lg", &x1_get, &x2_get);
                     if (MakeComparison (fmax (x1_get, x2_get), fmax(x1_ref, x2_ref)) &&
                         MakeComparison (fmin (x1_get, x2_get), fmin(x1_ref, x2_ref)))
-                        UpliftingMood (true);
+                        UpliftingMoodAfterCorrectAnswers ();
 
                     else {
-                        UpliftingMood (false);
-                        CoeffCase CoeffEquation = {.a = a, .b = b, .c = c};
-                        RootsFind (&CoeffEquation, &x1_get, &x2_get, true);
+                        UpliftingMoodAfterWrongAnswers (a, b, c, &x1_get, &x2_get);
                         printf ("Right answer:\nx1 = %lg, x2 = %lg", x1_get, x2_get);
                     }
 
@@ -499,9 +494,7 @@ void PracticeSolvingEquations (void) {
         }
 
         else {
-            UpliftingMood (false);
-            CoeffCase CoeffEquation = {.a = a, .b = b, .c = c};
-            RootsFind (&CoeffEquation, &x1_get, &x2_get, true);
+            UpliftingMoodAfterWrongAnswers (a, b, c, &x1_get, &x2_get);
             printf ("Right answer:\nx1 = %lg, x2 = %lg\n", x1_get, x2_get);
         }
     } while (QuestionContinue ());
@@ -509,16 +502,10 @@ void PracticeSolvingEquations (void) {
     fclose (file_address);
 }
 
-void UpliftingMood (bool accuracy) {
-    if (accuracy)
-     printf ("\nAbsolutely flawless! You nailed roots with pinpoint accuracy.\n"
-             "Your grasp formulas (or the discriminant) is crystal clear.\n"
-             "Keep up the great work - you're solving like a pro!\n");
-
-    else
-    printf ("\nYou made a mistake.\n"
-            "No worries - it's just one equation. Mistakes are clues, not failures.\n"
-            "Let's look at the solution!\n");
+void UpliftingMoodAfterCorrectAnswers () {
+    printf ("\nAbsolutely flawless! You nailed roots with pinpoint accuracy.\n"
+            "Your grasp formulas (or the discriminant) is crystal clear.\n"
+            "Keep up the great work - you're solving like a pro!\n");
 }
 
 int QuestionPracticeOrSolution (void) {
@@ -562,4 +549,12 @@ void SolveEquation (CoeffCase* CoeffEquation) {
                     CheckCorrectResponses (CoeffEquation, x1, x2, k_roots);
                 }
             } while (QuestionContinue ());
+}
+
+void UpliftingMoodAfterWrongAnswers (double a, double b, double c, double* x1_ptr, double* x2_ptr) {
+    printf ("\nYou made a mistake.\n"
+            "No worries - it's just one equation. Mistakes are clues, not failures.\n"
+            "Let's look at the solution!\n");
+    CoeffCase CoeffEquation = {.a = a, .b = b, .c = c};
+    RootsFind (&CoeffEquation, x1_ptr, x2_ptr, true);
 }
