@@ -5,6 +5,11 @@
 #include <ctype.h>
 #include <string.h>
 
+// TODO
+// USER FRIENDLY INTERFACE (нормальный ввод)
+// Цветной вывод
+// TODO
+
 typedef struct {
     double a, b, c;
 } CoeffCase;
@@ -51,7 +56,7 @@ void PracticeSolvingEquations (void);
 void SolveEquation (CoeffCase* CoeffEquation);
 
 // работа с числами
-int MakeComparison (double a, double b);
+int IsEqual (double a, double b);
 char GetOneSign (double x, int execution_option);
 
 // поиск ошибок
@@ -73,7 +78,7 @@ void UpliftingMoodAfterCorrectAnswers ();
 void UpliftingMoodAfterWrongAnswers (double a, double b, double c, double* x1_ptr, double* x2_ptr);
 
 int main() {
-    RunTests ();
+    RunTests (); // TODO подумать как запускать не каждый раз (аргументы командной строки)
 
     if (CheckEnum ())
         return 0;
@@ -107,7 +112,7 @@ int RootsFind (const CoeffCase* CoeffEquation, double* x1_ptr, double* x2_ptr, b
     assert (x2_ptr != NULL);
     assert (x1_ptr != x2_ptr);
 
-    if (MakeComparison (CoeffEquation->a, 0))
+    if (IsEqual (CoeffEquation->a, 0))
 
         return LinearEquation (CoeffEquation, x1_ptr, solution_need);
 
@@ -128,7 +133,7 @@ int RootsFind (const CoeffCase* CoeffEquation, double* x1_ptr, double* x2_ptr, b
                          GetOneSign (CoeffEquation->b, SING_MINUS_WHITESPACE),  fabs(CoeffEquation->b), d_sqrt,
                          GetOneSign (CoeffEquation->a, SING_WHITESPACE_MINUS),  fabs(CoeffEquation->a));
 
-            if (MakeComparison (d, 0)) {
+            if (IsEqual (d, 0)) {
                 *x1_ptr = (-CoeffEquation->b + d_sqrt) / (2 * CoeffEquation->a);
                 return ONE_ROOT;
             }
@@ -154,7 +159,7 @@ int LinearEquation (const CoeffCase* CoeffEquation, double* x1_ptr, bool solutio
     assert (CoeffEquation != NULL);
 
     /* все коэффициенты нули */
-    if (MakeComparison (CoeffEquation->b, 0) && MakeComparison (CoeffEquation->c, 0)) {
+    if (IsEqual (CoeffEquation->b, 0) && IsEqual (CoeffEquation->c, 0)) {
 
         if (solution_need)
             printf ("0 = 0\n");
@@ -163,7 +168,7 @@ int LinearEquation (const CoeffCase* CoeffEquation, double* x1_ptr, bool solutio
     }
 
     /* только с не ноль */
-    else if (MakeComparison (CoeffEquation->b, 0)) {
+    else if (IsEqual (CoeffEquation->b, 0)) {
 
         if (solution_need)
             printf ("%lg != 0\n", CoeffEquation->c);
@@ -207,7 +212,7 @@ void PrintAnswer (int k_roots, double x1, double x2) {
     }
 }
 
-int MakeComparison (double a, double b) {
+int IsEqual (double a, double b) {
     return fabs (a - b) <= EPSILON;
 }
 
@@ -222,7 +227,7 @@ int EnterVariables(CoeffCase* CoeffEquation) {
     printf ("a, b, c:\n\n");
 
     /* получаем коэффициенты */
-    int number_wrong_coefficient = scanf ("%lg, %lg, %lg", &CoeffEquation->a, &CoeffEquation->b, &CoeffEquation->c);
+    int number_wrong_coefficient = scanf ("%lg %lg %lg", &CoeffEquation->a, &CoeffEquation->b, &CoeffEquation->c);
     error_flag = (number_wrong_coefficient == 3) ? NO_ERROR : number_wrong_coefficient;
 
     while (char d = getchar() != '\n') {
@@ -264,13 +269,14 @@ void ErrorNotification (int error) {
 
 bool QuestionContinue (void) {
     // высылаем пользователю вопрос на повторение
-    printf ("\nDo you want to continue? Print 'yes' or 'not'.\n");
+    printf ("\nDo you want to continue? Print 'Y' (yes) or 'N' (not).\n");
 
     // считываем, хочет ли он повторения
-    char world[4] = "";
-    scanf ("%3s", world);
+    char world[3] = "";
+    scanf ("%1s", world);
+    world[0] = toupper(world[0]);
 
-    return ((strcmp (world, "yes") == 0) ? true : false);
+    return ((strcmp (world, "Y") == 0) ? true : false);
 }
 
 void CheckCorrectResponses (const CoeffCase* CoeffEquation, double x1, double x2, int k_roots) {
@@ -286,7 +292,7 @@ void CheckCorrectResponses (const CoeffCase* CoeffEquation, double x1, double x2
             break;
 
         case INFINITY_ROOTS:
-            if (MakeComparison (CoeffEquation->a, 0) && MakeComparison (CoeffEquation->b, 0) && MakeComparison (CoeffEquation->c, 0))
+            if (IsEqual (CoeffEquation->a, 0) && IsEqual (CoeffEquation->b, 0) && IsEqual (CoeffEquation->c, 0))
                 PrintRight ();
 
             else
@@ -295,7 +301,7 @@ void CheckCorrectResponses (const CoeffCase* CoeffEquation, double x1, double x2
             break;
 
         case ONE_ROOT:
-            if (MakeComparison (x1 * x1 * CoeffEquation->a + CoeffEquation->b * x1 + CoeffEquation->c, 0))
+            if (IsEqual (x1 * x1 * CoeffEquation->a + CoeffEquation->b * x1 + CoeffEquation->c, 0))
                 PrintRight ();
 
             else
@@ -304,8 +310,8 @@ void CheckCorrectResponses (const CoeffCase* CoeffEquation, double x1, double x2
             break;
 
         case TWO_ROOTS:
-                 if (MakeComparison (x1 * x1 * CoeffEquation->a + CoeffEquation->b * x1 + CoeffEquation->c, 0) &&
-                     MakeComparison (x2 * x2 * CoeffEquation->a + CoeffEquation->b * x2 + CoeffEquation->c, 0))
+                 if (IsEqual (x1 * x1 * CoeffEquation->a + CoeffEquation->b * x1 + CoeffEquation->c, 0) &&
+                     IsEqual (x2 * x2 * CoeffEquation->a + CoeffEquation->b * x2 + CoeffEquation->c, 0))
                 PrintRight ();
 
             else
@@ -320,13 +326,14 @@ void CheckCorrectResponses (const CoeffCase* CoeffEquation, double x1, double x2
 
 bool QuestionSolution (void) {
     // высылаем пользователю вопрос на повторение
-    printf ("\n\nDo you want to see the solution? Print 'yes' or 'not'.\n");
+    printf ("\n\nDo you want to see the solution? Print 'Y' (yes) or 'N' (not).\n");
 
     // считываем, хочет ли он повторения
-    char world[4] = "";
-    scanf ("%3s", world);
+    char world[2] = "";
+    scanf ("%1s", world);
+    world[0] = toupper(world[0]);
 
-    return ((strcmp (world, "yes") == 0) ? true : false);
+    return ((strcmp (world, "Y") == 0) ? true : false);
 }
 
 char GetOneSign (double x, int execution_option) {
@@ -342,7 +349,7 @@ char GetOneSign (double x, int execution_option) {
             return ((x >= 0) ? ' ': '-');
     }
 }
-// TODO Слава сказал, что это можно сделать как-то через assert
+
 bool CheckEnum (void) {
     if (NO_ROOTS == 0 && ONE_ROOT == 1 && TWO_ROOTS == 2 && INFINITY_ROOTS == 3 &&
         WRONG_FIRST_COEFFICIENT == 0 && WRONG_SECOND_COEFFICIENT == 1 && WRONG_THIRD_COEFFICIENT == 2 &&
@@ -380,8 +387,8 @@ void RunTests (void) {
         x1 = rand () / rand ();
         x2 = rand () / rand ();
         double a = rand () / rand ();
-        a = (MakeComparison (a, 0)) ? 1 : a;
-        x1 = (MakeComparison (x1, 0) && MakeComparison (x2, 0)) ? 1 : x1;
+        a = (IsEqual (a, 0)) ? 1 : a;
+        x1 = (IsEqual (x1, 0) && IsEqual (x2, 0)) ? 1 : x1;
 //                                    {{a, b,            c      }, n_roots_ref, x1_ref, x2_ref}
         TestCase test_random_struct = {{a, -a * (x1 + x2), a * x1 * x2}, TWO_ROOTS,   x1,     x2};
 
@@ -402,13 +409,13 @@ void RunOneTest (const TestCase Test, int number_test) {
                 break;
 
             case ONE_ROOT:
-                flag_not_failed  = MakeComparison (x1_get, Test.x1_ref);
+                flag_not_failed  = IsEqual (x1_get, Test.x1_ref);
 
                 break;
 
             case TWO_ROOTS:
-                flag_not_failed = (MakeComparison (x1_get, fmax (Test.x1_ref, Test.x2_ref)) &&
-                                   MakeComparison (x2_get, fmin (Test.x1_ref, Test.x2_ref)));
+                flag_not_failed = (IsEqual (x1_get, fmax (Test.x1_ref, Test.x2_ref)) &&
+                                   IsEqual (x2_get, fmin (Test.x1_ref, Test.x2_ref)));
 
                 break;
 
@@ -440,7 +447,7 @@ void PrintGaveWrongAnswer (void) {
 }
 
 void PracticeSolvingEquations (void) {
-    FILE* file_address = fopen("test_verification_data.txt", "r");
+    FILE* file_address = fopen("test_verification_data.txt", "r"); // лучше просто указать что за файл
 //  проверяем корректность адреса файла
     assert (file_address != NULL);
 
@@ -464,7 +471,7 @@ void PracticeSolvingEquations (void) {
                 case ONE_ROOT:
                     printf ("x1: ");
                     scanf ("%lg", &x1_get);
-                    if (MakeComparison ((x1_get), (x1_ref)))
+                    if (IsEqual ((x1_get), (x1_ref)))
                         UpliftingMoodAfterCorrectAnswers ();
 
                     else {
@@ -476,9 +483,9 @@ void PracticeSolvingEquations (void) {
 
                 case TWO_ROOTS:
                     printf ("x1, x2: ");
-                    scanf ("%lg, %lg", &x1_get, &x2_get);
-                    if (MakeComparison (fmax (x1_get, x2_get), fmax(x1_ref, x2_ref)) &&
-                        MakeComparison (fmin (x1_get, x2_get), fmin(x1_ref, x2_ref)))
+                    scanf ("%lg %lg", &x1_get, &x2_get);
+                    if (IsEqual (fmax (x1_get, x2_get), fmax(x1_ref, x2_ref)) &&
+                        IsEqual (fmin (x1_get, x2_get), fmin(x1_ref, x2_ref)))
                         UpliftingMoodAfterCorrectAnswers ();
 
                     else {
@@ -510,20 +517,21 @@ void UpliftingMoodAfterCorrectAnswers () {
 
 int QuestionPracticeOrSolution (void) {
     // высылаем пользователю вопрос на повторение
-    printf ("\nHello! Great to see you. Would you like to solve a quadratic equation together?\n"
+    printf ("Hello! Great to see you. Would you like to solve a quadratic equation together?\n"
             "Or would you prefer to practice with a set of examples —"
             "I'll give you equations, you send me your answers,"
             "and I'll check them? Choose what suits you best, and let's get started!.\n"
-            "Print PRACTICE or SOLUTION\n");
+            "Print 'P' (PRACTICE)  or 'S' (SOLUTION)\n");
 
     // считываем, хочет ли он повторения
-    char world[9] = "";
-    scanf ("%8s", world);
+    char world[1] = "";
+    scanf ("%1s", world);
+    world[0] = toupper(world[0]);
 
-    if (strcmp (world, "PRACTICE") == 0)
+    if (strcmp ((world), "P") == 0)
         return PRACTICE;
 
-    else if (strcmp (world, "SOLUTION") == 0)
+    else if (strcmp ((world), "S") == 0)
         return SOLUTION;
 
     else
