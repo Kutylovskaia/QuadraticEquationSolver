@@ -4,7 +4,8 @@
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>
-
+#include "color.h"
+#include "color.h"
 // TODO
 // USER FRIENDLY INTERFACE (нормальный ввод)
 // Цветной вывод
@@ -65,6 +66,7 @@ void CheckCorrectResponses (const CoeffCase* CoeffEquation, double x1, double x2
 bool CheckEnum (void);
 void RunOneTest (TestCase Test, int number_test);
 void RunTests (void);
+void SkipUnuselessCharacters (void);
 
 // функции вопросники
 bool QuestionContinue (void);
@@ -97,10 +99,10 @@ int main() {
             break;
 
         default:
-            printf ("Restart the program\n");
+            printf (BRIGHT_RED"Restart the program\n");
     }
 
-    printf ("See you!\n");
+    printf (BRIGHT_MAGENTA"See you!\n");
 
     return 0;
 }
@@ -126,7 +128,7 @@ int RootsFind (const CoeffCase* CoeffEquation, double* x1_ptr, double* x2_ptr, b
             d_sqrt = sqrt (d);
 
             if (solution_need)
-                printf ("%lg*x^2 %c %lg*x %c %lg = 0\nD = %lg\nx = (%c%lg +- %lg) / (%c2*%lg)\n",
+                printf (BRIGHT_YELLOW"%lg*x^2 %c %lg*x %c %lg = 0\nD = %lg\nx = (%c%lg +- %lg) / (%c2*%lg)\n",
                          CoeffEquation->a,
                          GetOneSign (CoeffEquation->b, SIGN_PLUS_MINUS),        fabs(CoeffEquation->b),
                          GetOneSign (CoeffEquation->c, SIGN_PLUS_MINUS),        fabs(CoeffEquation->c), d,
@@ -147,7 +149,7 @@ int RootsFind (const CoeffCase* CoeffEquation, double* x1_ptr, double* x2_ptr, b
 
         else {
             if (solution_need)
-                printf ("D = %lg <0\n", d);
+                printf (BRIGHT_YELLOW"D = %lg <0\n", d);
             return NO_ROOTS;
         }
      }
@@ -162,7 +164,7 @@ int LinearEquation (const CoeffCase* CoeffEquation, double* x1_ptr, bool solutio
     if (IsEqual (CoeffEquation->b, 0) && IsEqual (CoeffEquation->c, 0)) {
 
         if (solution_need)
-            printf ("0 = 0\n");
+            printf (BRIGHT_YELLOW"m0 = 0\n");
 
         return INFINITY_ROOTS;
     }
@@ -171,7 +173,7 @@ int LinearEquation (const CoeffCase* CoeffEquation, double* x1_ptr, bool solutio
     else if (IsEqual (CoeffEquation->b, 0)) {
 
         if (solution_need)
-            printf ("%lg != 0\n", CoeffEquation->c);
+            printf (BRIGHT_YELLOW"m%lg != 0\n", CoeffEquation->c);
 
         return NO_ROOTS;
     }
@@ -180,7 +182,7 @@ int LinearEquation (const CoeffCase* CoeffEquation, double* x1_ptr, bool solutio
     else {
 
         if (solution_need)
-            printf ("x = %c%lg/%lg\n", (GetOneSign(CoeffEquation->c * CoeffEquation->b, SING_MINUS_WHITESPACE)),
+            printf (BRIGHT_YELLOW"mx = %c%lg/%lg\n", (GetOneSign(CoeffEquation->c * CoeffEquation->b, SING_MINUS_WHITESPACE)),
             fabs(CoeffEquation->c), fabs(CoeffEquation->b));
 
         *x1_ptr = -CoeffEquation->c/CoeffEquation->b;
@@ -192,23 +194,23 @@ void PrintAnswer (int k_roots, double x1, double x2) {
     // вывод ответа
     switch (k_roots) {
         case NO_ROOTS:
-             printf ("\n no roots\n");
+             printf (BRIGHT_GREEN"\nNo roots\n");
              break;
 
         case ONE_ROOT:
-             printf ("\n x1 = %lg\n", x1);
+             printf (BRIGHT_GREEN"\nx1 = %lg\n", x1);
              break;
 
         case TWO_ROOTS:
-             printf ("\nx1 = %lg, x2 = %lg\n", x1, x2);
+             printf (BRIGHT_GREEN"\nx1 = %lg, x2 = %lg\n", x1, x2);
              break;
 
         case INFINITY_ROOTS:
-             printf ("\n An infinite number of roots\n\n");
+             printf (BRIGHT_GREEN"\nAn infinite number of roots\n\n");
              break;
 
         default:
-             printf ("\n A strange error\n\n");
+             printf (BRIGHT_RED"\nA strange error\n\n");
     }
 }
 
@@ -223,8 +225,8 @@ int EnterVariables(CoeffCase* CoeffEquation) {
     int error_flag = NO_ERROR;
 
     // послание пользователю
-    printf ("\nCoefficients of the quadratic equation\n");
-    printf ("a, b, c:\n\n");
+    printf (RESET"\nCoefficients of the quadratic equation\n");
+    printf (RESET"a, b, c:\n\n");
 
     /* получаем коэффициенты */
     int number_wrong_coefficient = scanf ("%lg %lg %lg", &CoeffEquation->a, &CoeffEquation->b, &CoeffEquation->c);
@@ -247,33 +249,34 @@ void ErrorNotification (int error) {
 // проверка, что WRONG_FIRST_COEFFICIENT = 0, иначе error не состыкуется с кейсами по значению
     switch (error) {
         case WRONG_FIRST_COEFFICIENT:
-            printf ("You have entered incorrect WRONG_FIRST_COEFFICIENT coefficient\n");
+            printf (BRIGHT_RED"You have entered incorrect WRONG_FIRST_COEFFICIENT coefficient\n");
             break;
 
         case WRONG_SECOND_COEFFICIENT:
-            printf ("You have entered incorrect WRONG_SECOND_COEFFICIENT coefficient\n");
+            printf (BRIGHT_RED"You have entered incorrect WRONG_SECOND_COEFFICIENT coefficient\n");
             break;
 
         case WRONG_THIRD_COEFFICIENT:
-            printf ("You have entered incorrect WRONG_THIRD_COEFFICIENT coefficient\n");
+            printf (BRIGHT_RED"You have entered incorrect WRONG_THIRD_COEFFICIENT coefficient\n");
             break;
 
         case WRONG_SYMBOLS_AFTER:
-            printf ("You typed strange symbols after the coefficients. You must have made a typo\n");
+            printf (BRIGHT_RED"You typed strange symbols after the coefficients. You must have made a typo\n");
             break;
 
         default:
-            printf ("Don't know what to do, hah\n");
+            printf (BRIGHT_RED"Don't know what to do, hah\n");
     }
 }
 
 bool QuestionContinue (void) {
     // высылаем пользователю вопрос на повторение
-    printf ("\nDo you want to continue? Print 'Y' (yes) or 'N' (not).\n");
+    printf (RESET"\nDo you want to continue? Print 'Y' (yes) or 'N' (not).\n");
 
     // считываем, хочет ли он повторения
     char world[3] = "";
     scanf ("%1s", world);
+    SkipUnuselessCharacters ();
     world[0] = toupper(world[0]);
 
     return ((strcmp (world, "Y") == 0) ? true : false);
@@ -320,17 +323,18 @@ void CheckCorrectResponses (const CoeffCase* CoeffEquation, double x1, double x2
             break;
 
         default:
-            printf ("Don't know what to do, hah\n");
+            printf (BRIGHT_RED"Don't know what to do, hah\n");
     }
 }
 
 bool QuestionSolution (void) {
     // высылаем пользователю вопрос на повторение
-    printf ("\n\nDo you want to see the solution? Print 'Y' (yes) or 'N' (not).\n");
+    printf (RESET"\n\nDo you want to see the solution? Print 'Y' (yes) or 'N' (not).\n");
 
     // считываем, хочет ли он повторения
     char world[2] = "";
     scanf ("%1s", world);
+    SkipUnuselessCharacters ();
     world[0] = toupper(world[0]);
 
     return ((strcmp (world, "Y") == 0) ? true : false);
@@ -356,7 +360,7 @@ bool CheckEnum (void) {
         WRONG_SYMBOLS_AFTER == 3 && NO_ERROR == 4)
         return false;
 
-    printf ("EnumValues aren't associated with a variable\n");
+    printf (BRIGHT_RED"EnumValues aren't associated with a variable\n");
     return true;
 }
 
@@ -428,7 +432,7 @@ void RunOneTest (const TestCase Test, int number_test) {
         flag_not_failed = false;
 
     if (!flag_not_failed)
-        printf ("Test %d FAILED:\n"
+        printf (BRIGHT_RED"Test %d FAILED:\n"
                 " a = %3.3lg, b = %3.3lg, c = %3.3lg\n"
                 "Expected: %d roots, x1 = %3.3lg, x2 = %3.3lg\n"
                 "Got:      %d roots, x1 = %3.3lg, x2 = %3.3lg\n",
@@ -439,11 +443,11 @@ void RunOneTest (const TestCase Test, int number_test) {
 }
 
 void PrintRight (void) {
-    printf ("Everything is right!\n");
+    printf (BRIGHT_GREEN"Everything is right!\n");
 }
 
 void PrintGaveWrongAnswer (void) {
-    printf ("Sorry, I gave you an incorrect answer.(\nLearn to do the calculations yourself.\n");
+    printf (BRIGHT_RED"Sorry, I gave you an incorrect answer.(\nLearn to do the calculations yourself.\n");
 }
 
 void PracticeSolvingEquations (void) {
@@ -458,9 +462,10 @@ void PracticeSolvingEquations (void) {
         double x1_get = NAN, x2_get = NAN;
 
         fscanf (file_address, "%lg %lg %lg %d %lg %lg", &a, &b, &c, &n_roots_ref, &x1_ref, &x2_ref);
-        printf ("\n%lg*x^2 %c %lg*x %c %lg = 0\n", a, GetOneSign (b, SIGN_PLUS_MINUS), fabs(b), GetOneSign (c, SIGN_PLUS_MINUS), fabs(c));
-        printf ("Number of roots: ");
+        printf (RESET"\n%lg*x^2 %c %lg*x %c %lg = 0\n", a, GetOneSign (b, SIGN_PLUS_MINUS), fabs(b), GetOneSign (c, SIGN_PLUS_MINUS), fabs(c));
+        printf (RESET"Number of roots: ");
         scanf ("%d", &n_roots_get);
+        SkipUnuselessCharacters ();
 
         if (n_roots_ref == n_roots_get){
             switch (n_roots_ref) {
@@ -469,40 +474,44 @@ void PracticeSolvingEquations (void) {
                     break;
 
                 case ONE_ROOT:
-                    printf ("x1: ");
+                    printf (RESET"x1: ");
                     scanf ("%lg", &x1_get);
+                    SkipUnuselessCharacters ();
+
                     if (IsEqual ((x1_get), (x1_ref)))
                         UpliftingMoodAfterCorrectAnswers ();
 
                     else {
                         UpliftingMoodAfterWrongAnswers (a, b, c, &x1_get, &x2_get);
-                        printf ("Right answer:\nx1 = %lg", x1_get);
+                        printf (BRIGHT_GREEN"Right answer:\nx1 = %lg", x1_get);
                     }
 
                     break;
 
                 case TWO_ROOTS:
-                    printf ("x1, x2: ");
+                    printf (RESET"x1, x2: ");
                     scanf ("%lg %lg", &x1_get, &x2_get);
+                    SkipUnuselessCharacters ();
+
                     if (IsEqual (fmax (x1_get, x2_get), fmax(x1_ref, x2_ref)) &&
                         IsEqual (fmin (x1_get, x2_get), fmin(x1_ref, x2_ref)))
                         UpliftingMoodAfterCorrectAnswers ();
 
                     else {
                         UpliftingMoodAfterWrongAnswers (a, b, c, &x1_get, &x2_get);
-                        printf ("Right answer:\nx1 = %lg, x2 = %lg", x1_get, x2_get);
+                        printf (BRIGHT_GREEN"Right answer:\nx1 = %lg, x2 = %lg", x1_get, x2_get);
                     }
 
                     break;
 
                 default:
-                    printf ("You must have a typo\n");
+                    printf (BRIGHT_RED"You must have a typo\n");
             }
         }
 
         else {
             UpliftingMoodAfterWrongAnswers (a, b, c, &x1_get, &x2_get);
-            printf ("Right answer:\nx1 = %lg, x2 = %lg\n", x1_get, x2_get);
+            printf (BRIGHT_GREEN"Right answer:\nx1 = %lg, x2 = %lg\n", x1_get, x2_get);
         }
     } while (QuestionContinue ());
 
@@ -510,14 +519,14 @@ void PracticeSolvingEquations (void) {
 }
 
 void UpliftingMoodAfterCorrectAnswers () {
-    printf ("\nAbsolutely flawless! You nailed roots with pinpoint accuracy.\n"
+    printf (BRIGHT_GREEN"\nAbsolutely flawless! You nailed roots with pinpoint accuracy.\n"
             "Your grasp formulas (or the discriminant) is crystal clear.\n"
             "Keep up the great work - you're solving like a pro!\n");
 }
 
 int QuestionPracticeOrSolution (void) {
     // высылаем пользователю вопрос на повторение
-    printf ("Hello! Great to see you. Would you like to solve a quadratic equation together?\n"
+    printf (BRIGHT_MAGENTA"Hello! Great to see you. Would you like to solve a quadratic equation together?\n"
             "Or would you prefer to practice with a set of examples —"
             "I'll give you equations, you send me your answers,"
             "and I'll check them? Choose what suits you best, and let's get started!.\n"
@@ -526,6 +535,7 @@ int QuestionPracticeOrSolution (void) {
     // считываем, хочет ли он повторения
     char world[1] = "";
     scanf ("%1s", world);
+    SkipUnuselessCharacters ();
     world[0] = toupper(world[0]);
 
     if (strcmp ((world), "P") == 0)
@@ -535,7 +545,7 @@ int QuestionPracticeOrSolution (void) {
         return SOLUTION;
 
     else
-        printf ("I don't understand you\n");
+        printf (BRIGHT_RED"I don't understand you\n");
 
     return WRONG_CHOICE;
 }
@@ -560,9 +570,16 @@ void SolveEquation (CoeffCase* CoeffEquation) {
 }
 
 void UpliftingMoodAfterWrongAnswers (double a, double b, double c, double* x1_ptr, double* x2_ptr) {
-    printf ("\nYou made a mistake.\n"
+    printf (BRIGHT_RED"\nYou made a mistake.\n"
             "No worries - it's just one equation. Mistakes are clues, not failures.\n"
             "Let's look at the solution!\n");
     CoeffCase CoeffEquation = {.a = a, .b = b, .c = c};
     RootsFind (&CoeffEquation, x1_ptr, x2_ptr, true);
+}
+
+void SkipUnuselessCharacters (void){
+    while (char d = getchar() != '\n') {
+        if (!isspace(d))
+            ;
+    }
 }
