@@ -6,10 +6,6 @@
 #include <string.h>
 #include "color.h"
 #include "color.h"
-// TODO
-// USER FRIENDLY INTERFACE (нормальный ввод)
-// Цветной вывод
-// TODO
 
 typedef struct {
     double a, b, c;
@@ -79,8 +75,17 @@ void PrintGaveWrongAnswer (void);
 void UpliftingMoodAfterCorrectAnswers ();
 void UpliftingMoodAfterWrongAnswers (double a, double b, double c, double* x1_ptr, double* x2_ptr);
 
-int main() {
-    RunTests (); // TODO подумать как запускать не каждый раз (аргументы командной строки)
+int main(int argc, char *argv[]) {
+    int comand_line_run_test = 0;
+
+    for (int i = 1; i < argc; i++) {
+        if (strcmp (argv[i], "-tests") == 0) {
+            comand_line_run_test = 1;
+        }
+    }
+
+    if (comand_line_run_test)
+        RunTests ();
 
     if (CheckEnum ())
         return 0;
