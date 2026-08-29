@@ -1,10 +1,11 @@
-//#include <TXLib.h>
+#include "TXLib.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>
 #include <ctype.h>
 #include <string.h>
+#include <windows.h>
 #include "color.h"
 
 typedef struct {
@@ -41,8 +42,10 @@ enum Signs {SING_MINUS_WHITESPACE = 0,
             };
 
 const double EPSILON = 1e-6;
-const int SHIFTING_X = 299;
-const int SHIFTING_Y = -399;
+const int WIDTH = 1200, HEIGHT =  800;
+const int SHIFTING_X = 600;
+const int SHIFTING_Y = 400;
+const int STEP = 50;
 
 // объявление функций
 int RootsFind (const CoeffCase* CoeffEquation, double* x1_ptr, double* x2_ptr, bool solution_need);
@@ -59,7 +62,7 @@ char GetSign (double x, int execution_option);
 // поиск ошибок
 void ErrorNotification (int error);
 void CheckCorrectResponses (const CoeffCase* CoeffEquation, double x1, double x2, int k_roots);
-bool CheckEnum (void);
+void CheckEnum (void);
 void RunOneTest (TestCase Test, int number_test);
 void RunTests (void);
 void SkipUnuselessCharacters (void);
@@ -87,6 +90,12 @@ int main(int argc, char *argv[]) {
     CheckEnum ();
 
     CoeffCase CoeffEquation = {.a = NAN, .b = NAN, .c = NAN};
+
+    // txClearConsole ();
+    // txTextCursor (false);
+    // txSetConsoleAttr (FOREGROUND_BLACK);
+    // txSetConsoleAttr (BACKGROUND_BLACK);
+    txCreateWindow (WIDTH, HEIGHT);
 
     int program_mode = QuestionPracticeOrSolution ();
 
@@ -118,8 +127,8 @@ int RootsFind (const CoeffCase* CoeffEquation, double* x1_ptr, double* x2_ptr, b
     if (solution_need)
         DrawGraphParabola (CoeffEquation->a, CoeffEquation->b, CoeffEquation->c);
 
-//    if (IsEqual (CoeffEquation->a, 0))
-  //      return LinearEquation (CoeffEquation, x1_ptr, solution_need);
+    if (IsEqual (CoeffEquation->a, 0))
+        return LinearEquation (CoeffEquation, x1_ptr, solution_need);
 
     /* считаем дискриминант*/
     double d = CoeffEquation->b * CoeffEquation->b - 4 * CoeffEquation->a * CoeffEquation->c;
@@ -233,7 +242,7 @@ int IsEqual (double a, double b) {
     return fabs (a - b) <= EPSILON;
 }
 // проверка корректности выведенных ответов
-bool CheckEnum (void) {
+void CheckEnum (void) {
     assert (NO_ROOTS == 0 && ONE_ROOT == 1 && TWO_ROOTS == 2 && INFINITY_ROOTS == 3);
     assert (WRONG_FIRST_COEFFICIENT == 0 && WRONG_SECOND_COEFFICIENT == 1 && WRONG_THIRD_COEFFICIENT == 2 &&
             WRONG_SYMBOLS_AFTER == 3 && NO_ERRORS == 4);
@@ -524,7 +533,8 @@ bool QuestionContinue (void) {
 
 bool QuestionSolution (void) {
     // высылаем пользователю вопрос на повторение
-    printf (RESET"\n\nDo you want to see the solution? Print 'Y' (yes) or 'N' (not).\n");
+    printf (RESET"\n\nDo you want to see the solution? Print 'Y' (yes) or 'N' (not).\n"
+                 "Press 'Esc' to see the solution and charts\n");
 
     // считываем, хочет ли он повторения
     char world[2] = "";
@@ -570,7 +580,8 @@ void UpliftingMoodAfterCorrectAnswers () {
 void UpliftingMoodAfterWrongAnswers (double a, double b, double c, double* x1_ptr, double* x2_ptr) {
     printf (BRIGHT_RED"\nYou made a mistake.\n"
             "No worries - it's just one equation. Mistakes are clues, not failures.\n"
-            "Let's look at the solution!\n");
+            "Let's look at the solution!\n"
+            "Press 'Esc' to see the solution\n");
     CoeffCase CoeffEquation = {.a = a, .b = b, .c = c};
     RootsFind (&CoeffEquation, x1_ptr, x2_ptr, true);
 }
@@ -582,36 +593,45 @@ void PrintCorrect (void) {
 void PrintGaveWrongAnswer (void) {
     printf (BRIGHT_RED"Sorry, I gave you an incorrect answer.(\nLearn to do the calculations yourself.\n");
 }
-/*
+
 // построение графиков
 void DrawGraphParabola (double a, double b, double c) {
-    const int WIDTH = 600, HEIGHT =  800;
-    txCreateWindow (WIDTH, HEIGHT);
+    txBegin ();
 
-    txSetColor (TX_RED);
+    txSetFillColor (TX_BLACK);
+    txClearConsole ();
+    txClear ();
+    txSetColor (TX_WHITE);
 
-    txLine (SHIFTING_X, 0, SHIFTING_X, -(HEIGHT - 1)); //ось y
+    txLine (SHIFTING_X, 0, SHIFTING_X, (HEIGHT - 1)); //ось y
     txLine (0, SHIFTING_Y, (WIDTH - 1), SHIFTING_Y); //oсь x
 
-    txTextOut (SHIFTING_X,SHIFTING_Y, "(0,0)");
-    txTextOut (SHIFTING_X, 10 + SHIFTING_Y, "(0,1)");
-    txTextOut (10 + SHIFTING_X, SHIFTING_Y, "(1,0)");
-
-    txSetColor (TX_BLUE);
-
-    double x_top_parabola = -b / 2 * a;
-    for (double x_1 = x_top_parabola - SHIFTING_X  /10; x_1 <= x_top_parabola + SHIFTING_X / 10; x_1 += 0.1) {
-        int x_2 = x_1 + 1;
-        int y_1 = -1 * (a * x_1 * x_1 + b * x_1 + c);
-        int y_2 = -1 * (a * x_2 * x_2 + b * x_2 + c);
-        // тут все значения увеличим в 10 раз, чтобы увеличить точность построения графика, чтобы график был плавным
-        txLine((int) x_1 + SHIFTING_X, (int) y_1 +SHIFTING_Y, (int) x_2 + SHIFTING_X, (int) y_2 + SHIFTING_Y);
-
-    txDestroyWindow ();
-    DefWindow
+    txSetFillColor (TX_RED);
+    for (int x = - SHIFTING_X / STEP, y = -SHIFTING_y / STEP; x <= SHIFTING_X / STEP; x++, y++) {
+        txCircle (SHIFTING_X, SHIFTING_Y - STEP * y, 4);
+        txCircle (SHIFTING_X + STEP * x, SHIFTING_Y, 4);
     }
+    txTextOut (SHIFTING_X, SHIFTING_Y, "0,0");
+    txTextOut (SHIFTING_X + STEP, SHIFTING_Y, "1");
+    txTextOut (SHIFTING_X, SHIFTING_Y - STEP, "1");
+
+    txTextOut (SHIFTING_X, SHIFTING_Y - STEP * 7.8, "Y");
+    txTextOut (SHIFTING_X + STEP * 11.5, SHIFTING_Y, "X");
+
+    txSetColor (TX_YELLOW);
+
+    double x_top_parabola = (IsEqual (a, 0)) ? 0 : (- b / (2 * a));
+
+    for (double x_1 = x_top_parabola - SHIFTING_X / STEP; x_1 <= x_top_parabola + SHIFTING_X / STEP; x_1 += 0.02) {
+        double x_2 = x_1 + 0.02;
+        double y_1 =  (a * x_1 * x_1 + b * x_1 + c);
+        double y_2 =  (a * x_2 * x_2 + b * x_2 + c);
+        // тут все значения увеличим в 10 раз, чтобы увеличить точность построения графика, чтобы график был плавным
+        txLine((int) (x_1 * STEP + SHIFTING_X), (int) (-y_1 * STEP + SHIFTING_Y),
+               (int) (x_2 * STEP + SHIFTING_X), (int) (-y_2 * STEP + SHIFTING_Y));
+    }
+    txEnd ();
 }
-*/
 // работа с аргументами командной строки
 void ReadingCommandLine (int argc, char *argv[]) {
     int comand_line_run_test = false;
